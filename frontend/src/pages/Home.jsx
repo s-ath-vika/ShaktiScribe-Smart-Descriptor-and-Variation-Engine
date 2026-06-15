@@ -2,7 +2,7 @@ import Hero from '../components/Hero';
 import Card from '../components/Card';
 
 export default function Home() {
-  // Sample local mock data representing HimShakti's core product lineup
+  // Sample local mock data 
   const sampleProducts = [
     {
       id: 1,

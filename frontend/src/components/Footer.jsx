@@ -11,7 +11,6 @@ export default function Footer() {
           </p>
         </div>
         <div className="flex space-x-6">
-          <span className="hover:text-emerald-400 cursor-help transition-colors">Agri-Allied Pipeline</span>
           <span className="hover:text-emerald-400 cursor-help transition-colors">Food Processing MSME Module</span>
         </div>
       </div>

@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 export default function Hero() {
   return (
     <header className="relative bg-slate-950 overflow-hidden py-20 md:py-32 border-b border-slate-900">
-      <div className="absolute top-0 right-0 w-96 h-96 bg-emerald-500/10 rounded-full filter blur-3xl pointer-events-none"></div>
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-emerald-500/5 rounded-full filter blur-[100px] pointer-events-none"></div>
       
       <div className="relative max-w-5xl mx-auto px-4 text-center space-y-6">
         <h1 className="text-4xl md:text-6xl font-black text-white tracking-tight leading-none">

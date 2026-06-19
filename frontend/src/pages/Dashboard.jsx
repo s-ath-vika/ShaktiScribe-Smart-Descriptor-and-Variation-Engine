@@ -1,20 +1,197 @@
+import { useState } from 'react';
+import { Button, Input, Modal, Toast, Loader } from '../components/ui';
+
 export default function Dashboard() {
+  const [formData, setFormData] = useState({ name: '', ingredients: '', weight: '', features: '' });
+  const [errors, setErrors] = useState({});
+  
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [hasOutput, setHasOutput] = useState(false);
+  const [activeTone, setActiveTone] = useState('Premium');
+  
+  const [isConfirmModalOpen, setIsModalOpen] = useState(false);
+  const [isSuccessToastOpen, setIsToastOpen] = useState(false);
+
+  const handleGenerationTrigger = () => {
+    const fieldErrors = {};
+    if (!formData.name) fieldErrors.name = "Product identity string cannot be left blank.";
+    if (!formData.ingredients) fieldErrors.ingredients = "Manufacturing ingredient specifications are required.";
+    
+    if (Object.keys(fieldErrors).length > 0) {
+      setErrors(fieldErrors);
+      return;
+    }
+    
+    setErrors({});
+    setIsProcessing(true);
+    
+    setTimeout(() => {
+      setIsProcessing(false);
+      setHasOutput(true);
+    }, 1200);
+  };
+
   return (
-    <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 min-h-[60vh]">
-      <div className="bg-white border border-slate-200 rounded-2xl p-8 shadow-sm">
-        <span className="text-xs font-semibold tracking-wider text-emerald-600 bg-emerald-50 px-3 py-1 rounded-full uppercase">
-          Workspace
-        </span>
-        <h1 className="text-3xl font-black text-slate-900 mt-3 mb-4">
-          ShaktiScribe Management Console
-        </h1>
-        <p className="text-slate-600 max-w-2xl leading-relaxed">
-          This secure dashboard workspace will act as the operational center where ground staff can input raw product metrics, manage active prompt templates, and view saved e-commerce assets. Full database connectivity coming soon.
-        </p>
-        <div className="mt-8 h-40 border-2 border-dashed border-slate-200 rounded-xl bg-slate-50 flex items-center justify-center text-sm text-slate-400">
-          Interactive context-aware parameters loading...
+    <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 min-h-[60vh] space-y-8">
+      
+      <div className="bg-white border border-slate-200 rounded-2xl p-8 shadow-sm flex flex-col md:flex-row md:items-center md:justify-between gap-6 dark:bg-slate-900 dark:border-slate-800">
+        <div className="max-w-2xl">
+          <span className="text-xs font-semibold tracking-wider text-emerald-600 bg-emerald-50 px-3 py-1 rounded-full uppercase dark:bg-emerald-950/50 dark:text-emerald-400">
+            Workspace
+          </span>
+          <h1 className="text-3xl font-black text-slate-900 mt-3 mb-4 dark:text-white">
+            ShaktiScribe Management Console
+          </h1>
+          <p className="text-slate-600 leading-relaxed dark:text-slate-400 ">
+            This secure dashboard workspace acts as the operational center where ground staff can input raw product metrics, manage active prompt templates, and view saved e-commerce assets.
+          </p>
         </div>
       </div>
+
+      {isProcessing && (
+        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-16 text-center shadow-sm animate-pulse w-full">
+          <Loader type="spinner" />
+          <p className="text-xs text-slate-400 font-medium mt-4 tracking-wide">Connecting to Gemini API, parsing raw attributes, and generating copy variations...</p>
+        </div>
+      )}
+
+      {!isProcessing && (
+        !hasOutput ? (
+          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 md:p-8 shadow-sm space-y-6 w-full">
+            <div className="border-b border-slate-100 dark:border-slate-800 pb-3">
+              <h2 className="text-sm font-bold uppercase tracking-wider text-slate-400">Raw Parameter Input Matrix</h2>
+            </div>
+            
+            <div className="space-y-5">
+              <Input 
+                label="Product Name" 
+                placeholder="e.g., Himalayan Finger Millet Snacks" 
+                value={formData.name}
+                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                error={errors.name}
+              />
+
+              <Input 
+                label="Ingredients" 
+                placeholder="e.g., Organic Ragi, Himalayan Rock Salt, Rice Bran Oil" 
+                value={formData.ingredients}
+                onChange={(e) => setFormData({ ...formData, ingredients: e.target.value })}
+                error={errors.ingredients}
+              />
+
+              <Input 
+                label="Weight / Parameters" 
+                placeholder="e.g., 150g or 250ml" 
+                value={formData.weight}
+                onChange={(e) => setFormData({ ...formData, weight: e.target.value })}
+              />
+
+              <Input 
+                label="Primary Feature List" 
+                placeholder="e.g., Rich in Calcium, Gluten-Free" 
+                value={formData.features}
+                onChange={(e) => setFormData({ ...formData, features: e.target.value })}
+              />
+
+              <div className="space-y-2">
+                <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider">
+                  Contextual Tone Selector Grid
+                </label>
+                <div className="grid grid-cols-3 gap-3">
+                  {['Premium', 'Traditional', 'Health-Focused'].map((tone) => (
+                    <Button
+                      key={tone}
+                      variant={activeTone === tone ? 'primary' : 'outline'}
+                      size="sm"
+                      onClick={() => setActiveTone(tone)}
+                    >
+                      {tone}
+                    </Button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="pt-4">
+                <Button variant="primary" onClick={handleGenerationTrigger} className="w-full py-4 text-base font-bold tracking-wide shadow-md">
+                  Generate Platform Listing
+                </Button>
+              </div>
+            </div>
+          </div>
+        ) : (
+          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 md:p-8 shadow-sm space-y-6 w-full transition-all">
+            
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-100 dark:border-slate-800 pb-5">
+              <div>
+                <span className="text-[10px] font-bold uppercase bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 px-2.5 py-1 rounded-md">
+                  {activeTone} Content Node Active
+                </span>
+                <h2 className="text-lg font-bold text-slate-900 dark:text-white mt-1.5">Generated Product Description Asset</h2>
+              </div>
+              <div className="flex items-center gap-3">
+                <Button variant="outline" size="sm" onClick={() => setIsModalOpen(true)}>Save Log</Button>
+                <Button variant="secondary" size="sm" onClick={() => setIsToastOpen(true)}>Copy to Clipboard</Button>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              
+              <div className="bg-slate-50 dark:bg-slate-950 border border-slate-100 dark:border-slate-900 rounded-xl p-5 space-y-3.5 text-xs text-slate-600 dark:text-slate-400">
+                <h3 className="font-bold uppercase tracking-wider text-[11px] text-slate-400">Input Specifications Summary</h3>
+                <p><strong>Product Profile:</strong> <span className="text-slate-900 dark:text-white font-medium">{formData.name}</span></p>
+                <p><strong>Configured Metrics:</strong> {formData.weight || 'Standard SKU Package'}</p>
+                <p className="border-t border-slate-200 dark:border-slate-800 pt-3">
+                  <strong>Ingredients Content List:</strong><br />
+                  <span className="italic mt-1 block">{formData.ingredients}</span>
+                </p>
+                {formData.features && (
+                  <p className="border-t border-slate-200 dark:border-slate-800 pt-3">
+                    <strong>Primary Target Features:</strong><br />
+                    <span className="inline-block mt-1 bg-slate-200/60 dark:bg-slate-800 px-2 py-0.5 rounded text-[11px] text-slate-700 dark:text-slate-300 font-medium">{formData.features}</span>
+                  </p>
+                )}
+              </div>
+
+              <div className="border border-slate-200 dark:border-slate-800 rounded-xl p-6 bg-white dark:bg-slate-900/50 flex flex-col justify-between min-h-[220px]">
+                <div className="prose prose-slate dark:prose-invert">
+                  <p className="text-sm font-medium text-slate-800 dark:text-slate-200 leading-relaxed italic">
+                    Experience the rich agricultural legacy of Uttarakhand with HimShakti's artisan-crafted [Product Name Placeholder]. Purely prepared using premium, clean mountain-grown ingredients and tailored strictly for a target [Tone Placeholder] consumer environment. Packed clean in customized package dimensions, it delivers the ultimate nutrient-dense fuel stack your active lifestyle demands. This is a secure system mockup representing upcoming automated content distribution assets.
+                  </p>
+                </div>
+                
+                <div className="border-t border-slate-100 dark:border-slate-800 pt-4 mt-4">
+                  <Button variant="outline" size="sm" onClick={handleGenerationTrigger} className="w-full sm:w-auto">
+                     Regenerate Copy Variation
+                  </Button>
+                </div>
+              </div>
+
+            </div>
+
+            <div className="pt-4 border-t border-slate-100 dark:border-slate-800 text-left">
+              <button 
+                onClick={() => setHasOutput(false)} 
+                className="text-xs font-semibold text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors cursor-pointer"
+              >
+                ← Return to Specifications Form
+              </button>
+            </div>
+
+          </div>
+        )
+      )}
+
+      <Modal isOpen={isConfirmModalOpen} onClose={() => setIsModalOpen(false)} title="Confirm Brand Asset Storage">
+        <div className="space-y-4">
+          <p>Are you sure you want to capture this generated e-commerce snippet and write it cleanly to your persistent database style history logs?</p>
+          <div className="flex justify-end gap-3 pt-2">
+            <Button variant="outline" size="sm" onClick={() => setIsModalOpen(false)}>Dismiss</Button>
+            <Button variant="primary" size="sm" onClick={() => { setIsModalOpen(false); setIsToastOpen(true); }}>Confirm Save</Button>
+          </div>
+        </div>
+      </Modal>
+
+      <Toast message="Copywriting snippet synchronized with clipboard handlers!" isVisible={isSuccessToastOpen} onDismiss={() => setIsToastOpen(false)} />
     </main>
   );
 }

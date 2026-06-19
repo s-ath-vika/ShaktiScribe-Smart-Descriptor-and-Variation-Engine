@@ -1,28 +1,33 @@
+import { useState } from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import Navbar from './components/Navbar';
 import Footer from './components/Footer';
 import Home from './pages/Home';
 import Dashboard from './pages/Dashboard';
+import History from './pages/History';
 import About from './pages/About';
 import Login from './pages/Login';
 
 export default function App() {
+  
+  const [theme, setTheme] = useState('light');
+
   return (
     <BrowserRouter>
-      {/* Structural layout flex wrapper to hold footer locked at the bottom edge */}
-      <div className="min-h-screen bg-slate-50 flex flex-col text-slate-900 selection:bg-emerald-400 selection:text-slate-950">
-        <Navbar />
+    
+      <div className={`min-h-screen flex flex-col bg-slate-50 text-slate-900 overflow-x-hidden ${theme === 'dark' ? 'dark bg-slate-950 text-slate-100' : ''}`}>
+        <Navbar theme={theme} setTheme={setTheme} />
         
-        {/* Dynamic page container view area injecting specific components safely */}
         <div className="flex-grow">
           <Routes>
             <Route path="/" element={<Home />} />
             <Route path="/dashboard" element={<Dashboard />} />
+            <Route path="/history" element={<History />} />
             <Route path="/about" element={<About />} />
             <Route path="/login" element={<Login />} />
           </Routes>
         </div>
-
+        
         <Footer />
       </div>
     </BrowserRouter>

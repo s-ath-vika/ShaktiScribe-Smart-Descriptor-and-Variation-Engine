@@ -9,20 +9,25 @@ import About from './pages/About';
 import Login from './pages/Login';
 
 export default function App() {
-  
   const [theme, setTheme] = useState('light');
+  const [editingLogItem, setEditingLogItem] = useState(null);
 
   return (
     <BrowserRouter>
-    
       <div className={`min-h-screen flex flex-col bg-slate-50 text-slate-900 overflow-x-hidden ${theme === 'dark' ? 'dark bg-slate-950 text-slate-100' : ''}`}>
         <Navbar theme={theme} setTheme={setTheme} />
         
         <div className="flex-grow">
           <Routes>
             <Route path="/" element={<Home />} />
-            <Route path="/dashboard" element={<Dashboard />} />
-            <Route path="/history" element={<History />} />
+            <Route 
+              path="/dashboard" 
+              element={<Dashboard editingItem={editingLogItem} clearEditingItem={() => setEditingLogItem(null)} />} 
+            />
+            <Route 
+              path="/history" 
+              element={<History triggerEditItem={(item) => setEditingLogItem(item)} />} 
+            />
             <Route path="/about" element={<About />} />
             <Route path="/login" element={<Login />} />
           </Routes>

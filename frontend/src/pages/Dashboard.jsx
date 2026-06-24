@@ -1,16 +1,37 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button, Input, Modal, Toast, Loader } from '../components/ui';
 
-export default function Dashboard() {
+export default function Dashboard({ editingItem, clearEditingItem }) {
   const [formData, setFormData] = useState({ name: '', ingredients: '', weight: '', features: '' });
   const [errors, setErrors] = useState({});
   
   const [isProcessing, setIsProcessing] = useState(false);
   const [hasOutput, setHasOutput] = useState(false);
   const [activeTone, setActiveTone] = useState('Premium');
+  const [editedText, setEditedText] = useState('');
   
   const [isConfirmModalOpen, setIsModalOpen] = useState(false);
-  const [isSuccessToastOpen, setIsToastOpen] = useState(false);
+  const [toastMessage, setToastMessage] = useState('');
+
+  useEffect(() => {
+    if (editingItem) {
+      setFormData({
+        name: editingItem.name || '',
+        ingredients: editingItem.ingredients || '',
+        weight: editingItem.weight || '',
+        features: editingItem.features || ''
+      });
+      setActiveTone(editingItem.tone || 'Premium');
+      setEditedText(editingItem.generatedText || '');
+      setHasOutput(true);
+      
+      setTimeout(() => {
+        clearEditingItem();
+      }, 0);
+      
+      setToastMessage("Loaded historical catalog asset template for operational adjustments.");
+    }
+  }, [editingItem]);
 
   const handleGenerationTrigger = () => {
     const fieldErrors = {};
@@ -24,11 +45,42 @@ export default function Dashboard() {
     
     setErrors({});
     setIsProcessing(true);
+    setHasOutput(false);
     
     setTimeout(() => {
+      const templateText = `Experience the rich agricultural legacy of Uttarakhand with HimShakti's artisan-crafted ${formData.name}. Purely prepared using premium, clean mountain-grown ingredients like ${formData.ingredients.split(',')[0]} and tailored strictly for a target ${activeTone.toLowerCase()} consumer environment. Packed clean in customized dimensions (${formData.weight || 'Standard SKU'}), it delivers the ultimate nutrient-dense fuel stack your active lifestyle demands. ${formData.features ? `Explicitly verified as a local collection variant that is completely ${formData.features.toLowerCase()}.` : ''}`;
+      
+      setEditedText(templateText);
       setIsProcessing(false);
       setHasOutput(true);
-    }, 1200);
+    }, 3000);
+  };
+
+  const handleSaveToBackend = async () => {
+    try {
+      const response = await fetch('http://localhost:5000/api/descriptions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          name: formData.name,
+          ingredients: formData.ingredients,
+          weight: formData.weight,
+          features: formData.features,
+          tone: activeTone,
+          generatedText: editedText
+        })
+      });
+
+      if (!response.ok) throw new Error('API rejection.');
+
+      setIsModalOpen(false);
+      setToastMessage("Asset logs committed successfully to the backend engine room database!");
+    } catch (error) {
+      console.error(error);
+      setToastMessage("Failed to write log parameters over port 5000 network.");
+    }
   };
 
   return (
@@ -130,13 +182,16 @@ export default function Dashboard() {
               </div>
               <div className="flex items-center gap-3">
                 <Button variant="outline" size="sm" onClick={() => setIsModalOpen(true)}>Save Log</Button>
-                <Button variant="secondary" size="sm" onClick={() => setIsToastOpen(true)}>Copy to Clipboard</Button>
+                <Button variant="secondary" size="sm" onClick={() => {
+                  navigator.clipboard.writeText(editedText);
+                  setToastMessage("Copywriting text snapped to system clipboard!");
+                }}>Copy to Clipboard</Button>
               </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-5 gap-6">
               
-              <div className="bg-slate-50 dark:bg-slate-950 border border-slate-100 dark:border-slate-900 rounded-xl p-5 space-y-3.5 text-xs text-slate-600 dark:text-slate-400">
+              <div className="md:col-span-2 bg-slate-50 dark:bg-slate-950 border border-slate-100 dark:border-slate-900 rounded-xl p-5 space-y-3.5 text-xs text-slate-600 dark:text-slate-400">
                 <h3 className="font-bold uppercase tracking-wider text-[11px] text-slate-400">Input Specifications Summary</h3>
                 <p><strong>Product Profile:</strong> <span className="text-slate-900 dark:text-white font-medium">{formData.name}</span></p>
                 <p><strong>Configured Metrics:</strong> {formData.weight || 'Standard SKU Package'}</p>
@@ -152,17 +207,24 @@ export default function Dashboard() {
                 )}
               </div>
 
-              <div className="border border-slate-200 dark:border-slate-800 rounded-xl p-6 bg-white dark:bg-slate-900/50 flex flex-col justify-between min-h-[220px]">
+              <div className="md:col-span-3 border border-slate-200 dark:border-slate-800 rounded-xl p-6 bg-white dark:bg-slate-900/50 flex flex-col justify-between min-h-[220px]">
                 <div className="prose prose-slate dark:prose-invert">
-                  <p className="text-sm font-medium text-slate-800 dark:text-slate-200 leading-relaxed italic">
-                    Experience the rich agricultural legacy of Uttarakhand with HimShakti's artisan-crafted [Product Name Placeholder]. Purely prepared using premium, clean mountain-grown ingredients and tailored strictly for a target [Tone Placeholder] consumer environment. Packed clean in customized package dimensions, it delivers the ultimate nutrient-dense fuel stack your active lifestyle demands. This is a secure system mockup representing upcoming automated content distribution assets.
-                  </p>
+                  <div className="flex items-center justify-between">
+                      <span className="text-[10px] text-emerald-500 font-bold bg-emerald-500/10 px-2 py-0.5 rounded animate-pulse select-none">
+                        ✍️ Custom Edits Enabled
+                      </span>
+                  </div>
+                  <textarea 
+                    value={editedText}
+                    onChange={(e) => setEditedText(e.target.value)}
+                    className="w-full h-48 p-4 text-sm font-medium text-slate-800 dark:text-slate-200 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl focus:outline-none focus:border-emerald-500 transition-colors resize-none font-mono leading-relaxed"
+                  />
                 </div>
                 
-                <div className="border-t border-slate-100 dark:border-slate-800 pt-4 mt-4">
-                  <Button variant="outline" size="sm" onClick={handleGenerationTrigger} className="w-full sm:w-auto">
-                     Regenerate Copy Variation
-                  </Button>
+                <div className="text-right border-t border-slate-100 dark:border-slate-800 pt-4 mt-4">
+                  <button onClick={handleGenerationTrigger} className="text-xs font-bold text-emerald-500 hover:text-emerald-400 transition-colors cursor-pointer">
+                    Re-compile Original Text Block
+                  </button>
                 </div>
               </div>
 
@@ -186,12 +248,12 @@ export default function Dashboard() {
           <p>Are you sure you want to capture this generated e-commerce snippet and write it cleanly to your persistent database style history logs?</p>
           <div className="flex justify-end gap-3 pt-2">
             <Button variant="outline" size="sm" onClick={() => setIsModalOpen(false)}>Dismiss</Button>
-            <Button variant="primary" size="sm" onClick={() => { setIsModalOpen(false); setIsToastOpen(true); }}>Confirm Save</Button>
+            <Button variant="primary" size="sm" onClick={handleSaveToBackend}>Confirm Save</Button>
           </div>
         </div>
       </Modal>
 
-      <Toast message="Copywriting snippet synchronized with clipboard handlers!" isVisible={isSuccessToastOpen} onDismiss={() => setIsToastOpen(false)} />
+      {toastMessage && <Toast message={toastMessage} isVisible={!!toastMessage} onDismiss={() => setToastMessage('')} />}
     </main>
   );
 }

@@ -26,13 +26,22 @@ himshakti-marketing-hub-project/
 ├── frontend/
 │   ├── src/
 │   │   ├── components/
-│   │   │   ├── ui/          # Reusable component design system library
+│   │   │   ├── ui/           # Reusable component design system library
+│   │   │   │   ├── index.js
+│   │   │   │   ├── Button.jsx
+│   │   │   │   ├── Input.jsx
+│   │   │   │   ├── Loader.jsx
+│   │   │   │   ├── Toast.jsx
+│   │   │   │   └── Modal.jsx         
 │   │   │   ├── Hero.jsx
+│   │   │   ├── Card.jsx
+│   │   │   ├── Footer.jsx
 │   │   │   └── Navbar.jsx
 │   │   └── pages/
 │   │       ├── Home.jsx
 │   │       ├── Dashboard.jsx # Dynamic input form & live generation flow
-│   │       ├── History.jsx   # Live streamed ledger records from server
+│   │       ├── History.jsx 
+│   │       ├── Login.jsx   # Live streamed ledger records from server
 │   │       └── About.jsx
 │   ├── package.json
 │   └── vite.config.js

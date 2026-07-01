@@ -1,9 +1,13 @@
 const express = require('express');
 const cors = require('cors');
+const mongoose = require('mongoose');
 require('dotenv').config();
+
+const Description = require('./models/Description');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
+const MONGO_URI = process.env.MONGO_URI;
 
 app.use(cors({
   origin: 'http://localhost:5173',
@@ -13,156 +17,149 @@ app.use(cors({
 
 app.use(express.json());
 
-let descriptions = [
-  {
-    id: 1,
-    name: "Himalayan Finger Millet Snacks",
-    ingredients: "Organic Ragi, Himalayan Rock Salt, Rice Bran Oil",
-    weight: "150g",
-    features: "Rich in Calcium, Gluten-Free",
-    tone: "Health-Focused",
-    generatedText: "Experience the rich agricultural legacy of Uttarakhand with HimShakti's artisan-crafted Himalayan Finger Millet Snacks. Purely prepared using premium, clean mountain-grown Organic Ragi. Packed clean in customized 150g formats, it delivers nutrient-dense fuel. Explicitly verified as a local collection variant that is completely Gluten-Free.",
-    createdAt: "June 16, 2026, 10:30 PM"
-  },
-  {
-    id: 2,
-    name: "Pure Rhododendron Juice",
-    ingredients: "Wild Buransh Blossoms, Organic Honey, Mountain Spring Water",
-    weight: "250ml",
-    features: "No Added Preservatives, Anti-Oxidant Rich",
-    tone: "Premium",
-    generatedText: "Discover the pristine flavor roots of Uttarakhand with HimShakti's premium Pure Rhododendron Juice. Meticulously extracted from clean wild Buransh blossoms. Packaged elegantly in 250ml skus to maintain total brand profile metrics. Features a composition with No Added Preservatives.",
-    createdAt: "June 15, 2026, 04:15 PM"
-  }
-];
+if (!MONGO_URI) {
+  console.error("FATAL CRITICAL ANOMALY: MONGO_URI variable is absent from your .env configuration schema mapping.");
+  process.exit(1);
+}
+
+mongoose.connect(MONGO_URI)
+  .then(() => console.log("[Mongoose Cluster Interface] -> Connected successfully to MongoDB Atlas Cloud Database Ledger."))
+  .catch((err) => console.error("Database cloud compilation link drop:", err));
 
 
-// ROUTE 1: GET /api/descriptions/search - Search logs via text query flags (Must sit ABOVE /:id)
-app.get('/api/descriptions/search', (req, res, next) => {
+// ROUTE 1: GET /api/descriptions/search - Filter logs via database model keyword query checks
+app.get('/api/descriptions/search', async (req, res, next) => {
   try {
     const { q } = req.query;
     if (!q) {
-      return res.status(200).json(descriptions);
+      const allItems = await Description.find().sort({ createdAt: -1 });
+      return res.status(200).json(allItems);
     }
-    
-    const query = q.toLowerCase();
-    const filtered = descriptions.filter(item => 
-      item.name.toLowerCase().includes(query) || 
-      item.ingredients.toLowerCase().includes(query) ||
-      item.tone.toLowerCase().includes(query)
-    );
-    
-    res.status(200).json(filtered);
+
+    const searchQuery = new RegExp(q, 'i');
+    const filteredRecords = await Description.find({
+      $or: [
+        { name: searchQuery },
+        { ingredients: searchQuery },
+        { tone: searchQuery }
+      ]
+    }).sort({ createdAt: -1 });
+
+    res.status(200).json(filteredRecords);
   } catch (error) {
     next(error);
   }
 });
 
-// ROUTE 2: GET /api/descriptions - Fetch all catalog logs
-app.get('/api/descriptions', (req, res, next) => {
+// ROUTE 2: GET /api/descriptions - Fetch all logs straight from MongoDB
+app.get('/api/descriptions', async (req, res, next) => {
   try {
-    res.status(200).json(descriptions);
+    const recordsLog = await Description.find().sort({ createdAt: -1 });
+    res.status(200).json(recordsLog);
   } catch (error) {
     next(error);
   }
 });
 
-// ROUTE 3: GET /api/descriptions/:id - Fetch a single marketing asset record log by unique ID
-app.get('/api/descriptions/:id', (req, res, next) => {
+// ROUTE 3: GET /api/descriptions/:id - Query a distinct document entry matching object hex ID key
+app.get('/api/descriptions/:id', async (req, res, next) => {
   try {
-    const id = parseInt(req.params.id);
-    const item = descriptions.find(d => d.id === id);
+    const { id } = req.params;
     
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({ error: "Invalid document primary identifier sequence format provided." });
+    }
+
+    const item = await Description.findById(id);
     if (!item) {
-      return res.status(404).json({ error: `Marketing item with ID ${id} was not found.` });
+      return res.status(404).json({ error: `Marketing document asset with ID sequence ${id} was not found.` });
     }
-    
+
     res.status(200).json(item);
   } catch (error) {
     next(error);
   }
 });
 
-// ROUTE 4: POST /api/descriptions - Append a user-approved (and potentially edited) asset log
-app.post('/api/descriptions', (req, res, next) => {
+// ROUTE 4: POST /api/descriptions - Insert a fresh user-approved copywriting document item
+app.post('/api/descriptions', async (req, res, next) => {
   try {
     const { name, ingredients, weight, features, tone, generatedText } = req.body;
-    
+
     if (!name || !ingredients || !generatedText) {
-      return res.status(400).json({ error: "Product Name, Ingredients, and Generated Text are mandatory fields." });
+      return res.status(400).json({ error: "Product Name, input Ingredients list, and calculated description text are mandatory parameters." });
     }
 
-    const newLog = {
-      id: descriptions.length > 0 ? Math.max(...descriptions.map(d => d.id)) + 1 : 1,
+    const newAssetDocument = new Description({
       name,
       ingredients,
-      weight: weight || "Standard SKU",
-      features: features || "None provided",
-      tone: tone || "Premium",
-      generatedText, 
-      createdAt: new Date().toLocaleString()
-    };
+      weight,
+      features,
+      tone,
+      generatedText
+    });
 
-    descriptions.push(newLog);
-    res.status(201).json(newLog);
+    const savedResult = await newAssetDocument.save();
+    res.status(201).json(savedResult);
   } catch (error) {
+    if (error.name === 'ValidationError') {
+      return res.status(400).json({ error: error.message });
+    }
     next(error);
   }
 });
 
-// ROUTE 5: PUT /api/descriptions/:id - Update structural modifications within a record log
-app.put('/api/descriptions/:id', (req, res, next) => {
+// ROUTE 5: PUT /api/descriptions/:id - Perform a full transactional parameters update query
+app.put('/api/descriptions/:id', async (req, res, next) => {
   try {
-    const id = parseInt(req.params.id);
-    const itemIndex = descriptions.findIndex(d => d.id === id);
-
-    if (itemIndex === -1) {
-      return res.status(404).json({ error: `Asset modification rejected. Record with ID ${id} not found.` });
+    const { id } = req.params;
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({ error: "Modification skipped. Invalid object identity key sequence format." });
     }
 
-    const { name, ingredients, weight, features, tone } = req.body;
-    
+    const { name, ingredients, weight, features, tone, generatedText } = req.body;
     if (!name || !ingredients) {
-      return res.status(400).json({ error: "Updated parameters require validation fields: name and ingredients strings." });
+      return res.status(400).json({ error: "Validation block failed. Updated layouts require valid name and ingredients text elements." });
     }
 
-    descriptions[itemIndex] = {
-      ...descriptions[itemIndex],
-      name,
-      ingredients,
-      weight: weight || descriptions[itemIndex].weight,
-      features: features || descriptions[itemIndex].features,
-      tone: tone || descriptions[itemIndex].tone,
-      updatedAt: new Date().toLocaleString()
-    };
+    const updatedDocument = await Description.findByIdAndUpdate(
+      id,
+      { name, ingredients, weight, features, tone, generatedText },
+      { new: true, runValidators: true }
+    );
 
-    res.status(200).json(descriptions[itemIndex]);
+    if (!updatedDocument) {
+      return res.status(404).json({ error: `Asset edit rejected. Profile index matching ID ${id} is absent.` });
+    }
+
+    res.status(200).json(updatedDocument);
   } catch (error) {
     next(error);
   }
 });
 
-// ROUTE 6: DELETE /api/descriptions/:id - Wipe out item entries from list cache
-app.delete('/api/descriptions/:id', (req, res, next) => {
+// ROUTE 6: DELETE /api/descriptions/:id - Erase a target document index from the live database
+app.delete('/api/descriptions/:id', async (req, res, next) => {
   try {
-    const id = parseInt(req.params.id);
-    const itemIndex = descriptions.findIndex(d => d.id === id);
-
-    if (itemIndex === -1) {
-      return res.status(404).json({ error: `Deletion skipped. Asset matching ID ${id} does not exist.` });
+    const { id } = req.params;
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({ error: "Deletion aborted. Targeted identification object key sequence is invalid." });
     }
 
-    descriptions.splice(itemIndex, 1);
-    res.status(204).send(); // 204 No Content response
+    const droppedDocument = await Description.findByIdAndDelete(id);
+    if (!droppedDocument) {
+      return res.status(404).json({ error: `Wipe log sequence dropped. Document item with primary ID reference ${id} does not exist.` });
+    }
+
+    res.status(204).send();
   } catch (error) {
     next(error);
   }
 });
 
-//  Centralised Global Error Handling Middleware Stack Handler
 app.use((err, req, res, next) => {
-  console.error("Server-side exception caught:", err.stack);
-  res.status(500).json({ error: "Internal server runtime anomaly detected. Processing sequence collapsed safely." });
+  console.error("System structural data anomaly logged:", err.stack);
+  res.status(500).json({ error: "Internal persistent database engine runtime disruption occurred." });
 });
 
 app.listen(PORT, () => {

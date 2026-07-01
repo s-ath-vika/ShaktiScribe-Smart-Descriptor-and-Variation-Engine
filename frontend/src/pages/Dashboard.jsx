@@ -10,6 +10,8 @@ export default function Dashboard({ editingItem, clearEditingItem }) {
   const [activeTone, setActiveTone] = useState('Premium');
   const [editedText, setEditedText] = useState('');
   
+  const [currentDbId, setCurrentDbId] = useState(null);
+  const [modalActionType, setModalActionType] = useState('CREATE'); 
   const [isConfirmModalOpen, setIsModalOpen] = useState(false);
   const [toastMessage, setToastMessage] = useState('');
 
@@ -23,6 +25,8 @@ export default function Dashboard({ editingItem, clearEditingItem }) {
       });
       setActiveTone(editingItem.tone || 'Premium');
       setEditedText(editingItem.generatedText || '');
+      
+      setCurrentDbId(editingItem._id || null);
       setHasOutput(true);
       
       setTimeout(() => {
@@ -31,7 +35,7 @@ export default function Dashboard({ editingItem, clearEditingItem }) {
       
       setToastMessage("Loaded historical catalog asset template for operational adjustments.");
     }
-  }, [editingItem]);
+  }, [editingItem, clearEditingItem]);
 
   const handleGenerationTrigger = () => {
     const fieldErrors = {};
@@ -56,10 +60,20 @@ export default function Dashboard({ editingItem, clearEditingItem }) {
     }, 3000);
   };
 
-  const handleSaveToBackend = async () => {
+  const triggerSaveModal = (type) => {
+    setModalActionType(type);
+    setIsModalOpen(true);
+  };
+
+  const handleExecuteDatabaseTransaction = async () => {
     try {
-      const response = await fetch('http://localhost:5000/api/descriptions', {
-        method: 'POST',
+      const isUpdate = modalActionType === 'UPDATE';
+      const endpointUrl = isUpdate 
+        ? `http://localhost:5000/api/descriptions/${currentDbId}`
+        : 'http://localhost:5000/api/descriptions';
+        
+      const response = await fetch(endpointUrl, {
+        method: isUpdate ? 'PUT' : 'POST',
         headers: {
           'Content-Type': 'application/json'
         },
@@ -73,13 +87,16 @@ export default function Dashboard({ editingItem, clearEditingItem }) {
         })
       });
 
-      if (!response.ok) throw new Error('API rejection.');
+      if (!response.ok) throw new Error('API database cluster rejected the tracking request transaction.');
 
       setIsModalOpen(false);
-      setToastMessage("Asset logs committed successfully to the backend engine room database!");
+      setToastMessage(isUpdate 
+        ? "Historical ledger record overwritten and synchronized successfully!" 
+        : "Asset logs committed successfully to the backend engine room database!"
+      );
     } catch (error) {
       console.error(error);
-      setToastMessage("Failed to write log parameters over port 5000 network.");
+      setToastMessage("Failed to write log parameters over cloud cluster endpoints network.");
     }
   };
 
@@ -164,7 +181,7 @@ export default function Dashboard({ editingItem, clearEditingItem }) {
               </div>
 
               <div className="pt-4">
-                <Button variant="primary" onClick={handleGenerationTrigger} className="w-full py-4 text-base font-bold tracking-wide shadow-md">
+                <Button variant="primary" onClick={() => { setCurrentDbId(null); handleGenerationTrigger(); }} className="w-full py-4 text-base font-bold tracking-wide shadow-md">
                   Generate Platform Listing
                 </Button>
               </div>
@@ -180,9 +197,27 @@ export default function Dashboard({ editingItem, clearEditingItem }) {
                 </span>
                 <h2 className="text-lg font-bold text-slate-900 dark:text-white mt-1.5">Generated Product Description Asset</h2>
               </div>
+              
               <div className="flex items-center gap-3">
-                <Button variant="outline" size="sm" onClick={() => setIsModalOpen(true)}>Save Log</Button>
-                <Button variant="secondary" size="sm" onClick={() => {
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={() => triggerSaveModal('CREATE')}
+                >
+                  Save New Log
+                </Button>
+                
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  disabled={!currentDbId}
+                  onClick={() => triggerSaveModal('UPDATE')}
+                  className={!currentDbId ? "opacity-40 cursor-not-allowed" : ""}
+                >
+                  ⚙️ Update Log
+                </Button>
+
+                <Button variant="outline" size="sm" onClick={() => {
                   navigator.clipboard.writeText(editedText);
                   setToastMessage("Copywriting text snapped to system clipboard!");
                 }}>Copy to Clipboard</Button>
@@ -190,9 +225,9 @@ export default function Dashboard({ editingItem, clearEditingItem }) {
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-5 gap-6">
-              
               <div className="md:col-span-2 bg-slate-50 dark:bg-slate-950 border border-slate-100 dark:border-slate-900 rounded-xl p-5 space-y-3.5 text-xs text-slate-600 dark:text-slate-400">
                 <h3 className="font-bold uppercase tracking-wider text-[11px] text-slate-400">Input Specifications Summary</h3>
+                {currentDbId && <p className="text-[10px] text-emerald-500 font-mono"><strong>Loaded Document ID:</strong> {currentDbId}</p>}
                 <p><strong>Product Profile:</strong> <span className="text-slate-900 dark:text-white font-medium">{formData.name}</span></p>
                 <p><strong>Configured Metrics:</strong> {formData.weight || 'Standard SKU Package'}</p>
                 <p className="border-t border-slate-200 dark:border-slate-800 pt-3">
@@ -227,7 +262,6 @@ export default function Dashboard({ editingItem, clearEditingItem }) {
                   </button>
                 </div>
               </div>
-
             </div>
 
             <div className="pt-4 border-t border-slate-100 dark:border-slate-800 text-left">
@@ -243,12 +277,21 @@ export default function Dashboard({ editingItem, clearEditingItem }) {
         )
       )}
 
-      <Modal isOpen={isConfirmModalOpen} onClose={() => setIsModalOpen(false)} title="Confirm Brand Asset Storage">
+      <Modal 
+        isOpen={isConfirmModalOpen} 
+        onClose={() => setIsModalOpen(false)} 
+        title={modalActionType === 'UPDATE' ? "Confirm Document Asset Overwrite" : "Confirm Brand Asset Storage"}
+      >
         <div className="space-y-4">
-          <p>Are you sure you want to capture this generated e-commerce snippet and write it cleanly to your persistent database style history logs?</p>
+          <p>
+            {modalActionType === 'UPDATE' 
+              ? "Are you sure you want to completely overwrite this record's properties inside MongoDB Atlas? This will perform a live database PUT operation."
+              : "Are you sure you want to capture this fresh generated e-commerce snippet and append a new record document inside your database?"
+            }
+          </p>
           <div className="flex justify-end gap-3 pt-2">
             <Button variant="outline" size="sm" onClick={() => setIsModalOpen(false)}>Dismiss</Button>
-            <Button variant="primary" size="sm" onClick={handleSaveToBackend}>Confirm Save</Button>
+            <Button variant="primary" size="sm" onClick={handleExecuteDatabaseTransaction}>Confirm Action</Button>
           </div>
         </div>
       </Modal>

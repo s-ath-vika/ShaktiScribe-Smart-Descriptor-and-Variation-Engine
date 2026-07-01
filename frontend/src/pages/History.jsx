@@ -19,7 +19,9 @@ function HistoryCard({ log, onDelete, onEdit, onToast }) {
           <span className="text-[10px] font-bold px-2 py-0.5 bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded text-slate-600 dark:text-slate-300 uppercase">
             {log.tone}
           </span>
-          <span className="text-[10px] text-slate-400">{log.createdAt || "Saved Log"}</span>
+          <span className="text-[10px] text-slate-400">
+            {log.createdAt ? new Date(log.createdAt).toLocaleDateString() : "Saved Log"}
+          </span>
         </div>
 
         <div className="text-xs text-slate-600 dark:text-slate-300 font-mono bg-slate-50 dark:bg-slate-950 p-4 rounded-xl border border-slate-100 dark:border-slate-900 leading-relaxed">
@@ -100,15 +102,21 @@ export default function History({ triggerEditItem }) {
     fetchLogs();
   }, []);
 
-  const handleDeleteLog = async (id) => {
+  const handleDeleteLog = async (mongoId) => {
     try {
-      const response = await fetch(`http://localhost:5000/api/descriptions/${id}`, { method: 'DELETE' });
+      const response = await fetch(`http://localhost:5000/api/descriptions/${mongoId}`, { 
+        method: 'DELETE' 
+      });
+      
       if (response.status === 204) {
-        setSavedLogs(prev => prev.filter(log => log.id !== id));
-        setToastMessage(`Asset record identity #${id} safely deleted from system.`);
+        setSavedLogs(prev => prev.filter(log => log._id !== mongoId));
+        setToastMessage("Asset record safely wiped from cloud storage ledger.");
+      } else {
+        throw new Error("Deletion sequence rejected by backend engine.");
       }
     } catch (error) {
-      setToastMessage("Deletion sequence failed.");
+      console.error(error);
+      setToastMessage("Deletion sequence failed. Check server port.");
     }
   };
 
@@ -137,10 +145,11 @@ export default function History({ triggerEditItem }) {
         ) : (
           <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl divide-y divide-slate-100 dark:divide-slate-800 shadow-sm overflow-hidden">
             {savedLogs.map((log) => (
+              
               <HistoryCard 
-                key={log.id}
+                key={log._id}
                 log={log}
-                onDelete={() => handleDeleteLog(log.id)}
+                onDelete={() => handleDeleteLog(log._id)}
                 onToast={(msg) => setToastMessage(msg)}
                 onEdit={() => {
                   triggerEditItem(log);

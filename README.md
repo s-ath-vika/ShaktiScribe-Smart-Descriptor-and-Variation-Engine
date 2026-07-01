@@ -19,6 +19,8 @@ A fully responsive, mobile-first web application that utilizes an LLM API framew
 ```text
 himshakti-marketing-hub-project/
 ├── backend/
+│   ├── models/
+│   │   └── Description.js 
 │   ├── .env.example
 │   ├── package.json
 │   ├── server.js
@@ -45,6 +47,7 @@ himshakti-marketing-hub-project/
 │   │       └── About.jsx
 │   ├── package.json
 │   └── vite.config.js
+├── schema-diagram.png
 └── README.md                 # Global Workspace Manual Documentation
 ```
 
@@ -145,7 +148,7 @@ For the **ShaktiScribe** application ecosystem, we selected **MongoDB NoSQL** in
 
 The backend enforces a strict modeling validation loop through a single centralized data collection instance tracking the following payload entities:
 
-![ShaktiScribe MongoDB Schema](./W5_SchemaDiagram_TBI-26100143.png)
+![ShaktiScribe MongoDB Schema](./schema-diagram.png)
 ---
 
 ## ⚙️ Setting Up the Cloud Database Base Connection

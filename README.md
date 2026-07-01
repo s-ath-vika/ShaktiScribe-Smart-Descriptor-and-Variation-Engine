@@ -129,5 +129,33 @@ The Node Express application exposes 6 dedicated data model endpoints whiteliste
 | DELETE      | `/api/descriptions/:id`       | Completely wipes an entry card block from the backend data array    | 204 No Content / 404 Not Found |
 | GET         | `/api/descriptions/search?q=` | Case-insensitively filters list arrays by matching text parameters  | 200 OK                         |
 
+---
+## 🗄️ Database Integration & Schema Architecture 
+
+### 📌 Database Choice: MongoDB Atlas (NoSQL Document Store)
+
+For the **ShaktiScribe** application ecosystem, we selected **MongoDB NoSQL** integrated via the **Mongoose ODM (Object Data Modeling)** framework. This architectural decision was made because:
+
+- **Schema Flexibility:** Product copy requirements for varied grassroots MSME sectors (like the *HimShakti Food Processing Unit*) contain highly dynamic parameters, variable layout options, and structural tags that naturally favor NoSQL's flexible, JSON-like document syntax over rigid SQL tables.
+- **Rapid Scale Adaptability:** As the underlying generative context models expand, fields can be appended immediately to collection documents without introducing structural migration disruptions or runtime pipeline locks.
+
+---
+
+## 📊 Schema Configuration Blueprint Diagram
+
+The backend enforces a strict modeling validation loop through a single centralized data collection instance tracking the following payload entities:
+
+![ShaktiScribe MongoDB Schema](./W5_SchemaDiagram_TBI-26100143.png)
+---
+
+## ⚙️ Setting Up the Cloud Database Base Connection
+
+Provision a shared cluster instance sandbox using the **MongoDB Atlas Cloud Free M0 Tier**. Whitelist a sandbox network firewall mask rule (`0.0.0.0/0`) under cluster configuration.
+
+Formulate an administrative alphanumeric password pair, construct a secure access path connection string, and drop it locally inside your secret environment configuration layout:
+
+```env
+MONGO_URI=mongodb+srv://shakti_admin:<password>@cluster0.xxxx.mongodb.net/shaktiscribe?retryWrites=true&w=majority
 ```
-```
+
+Boot up the local Node.js application process environment terminal loop (`npm run dev`) to bind active connections straight to the operational database.

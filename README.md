@@ -20,6 +20,8 @@ A fully responsive, mobile-first web application that utilizes an LLM API framew
 himshakti-marketing-hub-project/
 ├── backend/
 │   ├── models/
+│   │   ├── Message.js
+│   │   ├── User.js      
 │   │   └── Description.js 
 │   ├── .env.example
 │   ├── package.json
@@ -43,6 +45,7 @@ himshakti-marketing-hub-project/
 │   │       ├── Home.jsx
 │   │       ├── Dashboard.jsx # Dynamic input form & live generation flow
 │   │       ├── History.jsx 
+│   │       ├── Contact.jsx
 │   │       ├── Login.jsx   # Live streamed ledger records from server
 │   │       └── About.jsx
 │   ├── package.json
@@ -114,25 +117,12 @@ npm run dev
 The builder will compile your components and serve the web interface locally on:
 
 ```text
-http://localhost:5173
+http://localhost:port
 ```
 
 ---
 
-# 🎛️ REST API Specification (Week 4 CRUD Matrix)
 
-The Node Express application exposes 6 dedicated data model endpoints whitelisted for cross-origin tracking (CORS) with the local React ecosystem:
-
-| HTTP Method | API Route Endpoint            | Context Function Description                                        | Expected Status Codes          |
-| ----------- | ----------------------------- | ------------------------------------------------------------------- | ------------------------------ |
-| GET         | `/api/descriptions`           | Streams full ledger array of saved marketing listings               | 200 OK                         |
-| GET         | `/api/descriptions/:id`       | Fetches a single distinct description entry card by its explicit ID | 200 OK / 404 Not Found         |
-| POST        | `/api/descriptions`           | Parses spec payloads, appends fresh listing items to server cache   | 201 Created / 400 Bad Request  |
-| PUT         | `/api/descriptions/:id`       | Modifies existing configuration metrics matching parameter ID keys  | 200 OK / 404 Not Found         |
-| DELETE      | `/api/descriptions/:id`       | Completely wipes an entry card block from the backend data array    | 204 No Content / 404 Not Found |
-| GET         | `/api/descriptions/search?q=` | Case-insensitively filters list arrays by matching text parameters  | 200 OK                         |
-
----
 ## 🗄️ Database Integration & Schema Architecture 
 
 ### 📌 Database Choice: MongoDB Atlas (NoSQL Document Store)

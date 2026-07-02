@@ -1,71 +1,101 @@
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
+import { Button, Toast } from './ui';
 
-export default function Navbar({ theme, setTheme }) {
-  const [isOpen, setIsOpen] = useState(false);
+export default function Navbar({ theme, setTheme, user, onLogout }) {
+  const navigate = useNavigate();
+  const [isConfirmOpen, setIsConfirmOpen] = useState(false);
+  const [toastMessage, setToastMessage] = useState('');
 
-  
-  const handleThemeToggle = () => {
-    setTheme(theme === 'light' ? 'dark' : 'light');
+  const executeLogoutSequence = () => {
+    setIsConfirmOpen(false);
+    onLogout();
+    setToastMessage("Session destroyed successfully. Cleared operational parameters cache.");
+    setTimeout(() => {
+      navigate('/');
+    }, 1200);
   };
 
   return (
-    <nav className="bg-slate-900 text-white border-b border-slate-800 sticky top-0 z-50">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between h-16 items-center">
-          
-          <Link to="/" className="text-xl font-black tracking-tight text-emerald-400">
+    <>
+      <nav className="w-full bg-white dark:bg-slate-950 border-b border-slate-200 dark:border-slate-900 px-6 py-4 flex items-center justify-between transition-colors sticky top-0 z-40">
+        <div className="flex items-center gap-6">
+          <Link to="/" className="text-lg font-black tracking-wider text-slate-900 dark:text-white uppercase flex items-center gap-2">
+            <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
             ShaktiScribe
           </Link>
-
-          <div className="hidden md:flex space-x-8 text-sm font-medium">
-            <Link to="/" className="hover:text-emerald-400 transition-colors">Home</Link>
-            <Link to="/about" className="hover:text-emerald-400 transition-colors">About App</Link>
-            <Link to="/dashboard" className="hover:text-emerald-400 transition-colors">Dashboard</Link>
-            <Link to="/history" className="hover:text-emerald-400 transition-colors">Saved Logs</Link>
-            <Link to="/contact" className="hover:text-emerald-400 transition-colors">Contact Us</Link>
-          </div>
-
-          <div className="hidden md:flex items-center space-x-4">
-            
-            <button 
-              onClick={handleThemeToggle} 
-              className="px-3 py-1.5 text-xs font-bold uppercase tracking-wider rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 transition-all border border-slate-700 cursor-pointer"
-            >
-              {theme === 'dark' ? '☀️ Light Profile' : '🌙 Dark Profile'}
-            </button>
-
-            <Link to="/login" className="px-4 py-2 text-xs bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold rounded-lg transition-all">
-              Staff Portal
-            </Link>
-          </div>
-
-          <div className="flex md:hidden items-center space-x-2">
-            <button 
-              onClick={handleThemeToggle} 
-              className="p-2 rounded-xl bg-slate-800 text-xs border border-slate-700 text-slate-200"
-            >
-              {theme === 'dark' ? '☀️' : '🌙'}
-            </button>
-            <button onClick={() => setIsOpen(!isOpen)} className="p-2 rounded-xl hover:bg-slate-800 text-white">
-              {isOpen ? '✕' : '☰'}
-            </button>
+          <div className="hidden md:flex items-center gap-4 text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+            <Link to="/about" className="hover:text-emerald-500 transition-colors">About</Link>
+            <Link to="/contact" className="hover:text-emerald-500 transition-colors">Contact</Link>
+            {user && (
+              <>
+                <Link to="/dashboard" className="hover:text-emerald-500 transition-colors">Dashboard</Link>
+                <Link to="/history" className="hover:text-emerald-500 transition-colors">History Ledger</Link>
+              </>
+            )}
           </div>
         </div>
-      </div>
 
-      {isOpen && (
-        <div className="md:hidden px-4 pt-2 pb-4 bg-slate-950 space-y-3 border-t border-slate-800 flex flex-col text-sm">
-          <Link to="/" onClick={() => setIsOpen(false)} className="py-2 hover:text-emerald-400">Home</Link>
-          <Link to="/about" onClick={() => setIsOpen(false)} className="py-2 hover:text-emerald-400">About App</Link>
-          <Link to="/dashboard" onClick={() => setIsOpen(false)} className="py-2 hover:text-emerald-400">Dashboard</Link>
-          <Link to="/history" onClick={() => setIsOpen(false)} className="py-2 hover:text-emerald-400">Saved Logs</Link>
-          <Link to="/contact" onClick={()=>setIsOpen(false)} className="py-2 hover:text-emerald-400">Contact Us</Link>
-          <Link to="/login" onClick={() => setIsOpen(false)} className="py-2 text-center bg-slate-900 text-white rounded-xl text-xs font-semibold mt-2">
-            Staff Portal
-          </Link>
+        <div className="flex items-center gap-3">
+          <button 
+            onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+            className="p-2 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-900 dark:hover:bg-slate-800 transition-colors text-sm cursor-pointer"
+          >
+            {theme === 'dark' ? '☀️' : '🌙'}
+          </button>
+
+          {user ? (
+            <div className="flex items-center gap-3">
+              <span className="hidden sm:inline font-mono text-[11px] bg-emerald-500/10 text-emerald-500 px-2.5 py-1 border border-emerald-500/10 rounded-lg font-bold">
+                👤 {user.username}
+              </span>
+              <button
+                onClick={() => setIsConfirmOpen(true)}
+                className="inline-flex items-center justify-center font-semibold rounded-xl transition-all font-medium focus:outline-none tracking-wide active:scale-[0.98] px-4 py-2 text-xs cursor-pointer border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800"
+              >
+                🔒 Terminate Session
+              </button>
+            </div>
+          ) : (
+            <Link to="/login">
+              <Button variant="primary" size="sm">
+                Staff Portal Gate
+              </Button>
+            </Link>
+          )}
+        </div>
+      </nav>
+
+      {isConfirmOpen && (
+        <div className="fixed inset-0 bg-slate-950/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 max-w-sm w-full rounded-2xl p-6 shadow-2xl text-left space-y-4 animate-in fade-in zoom-in-95 duration-150">
+            <h3 className="text-base font-bold text-slate-900 dark:text-white">
+              Confirm System Logout Sequence
+            </h3>
+            <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
+              Are you sure you want to terminate your current session? This action will disconnect writing tokens until the next authorization handshake.
+            </p>
+            <div className="flex gap-2 justify-end pt-2">
+              <button
+                onClick={() => setIsConfirmOpen(false)}
+                className="inline-flex items-center justify-center font-semibold rounded-xl transition-all font-medium focus:outline-none tracking-wide active:scale-[0.98] px-3 py-1.5 text-xs cursor-pointer border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={executeLogoutSequence}
+                className="inline-flex items-center justify-center font-semibold rounded-xl transition-all font-medium focus:outline-none tracking-wide active:scale-[0.98] px-3 py-1.5 text-xs cursor-pointer bg-red-500 hover:bg-red-400 text-white"
+              >
+                Disconnect Session
+              </button>
+            </div>
+          </div>
         </div>
       )}
-    </nav>
+
+      {toastMessage && (
+        <Toast message={toastMessage} isVisible={!!toastMessage} onDismiss={() => setToastMessage('')} />
+      )}
+    </>
   );
 }

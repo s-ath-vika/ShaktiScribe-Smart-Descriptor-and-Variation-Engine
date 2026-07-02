@@ -20,9 +20,10 @@ export default function Navbar({ theme, setTheme }) {
 
           <div className="hidden md:flex space-x-8 text-sm font-medium">
             <Link to="/" className="hover:text-emerald-400 transition-colors">Home</Link>
+            <Link to="/about" className="hover:text-emerald-400 transition-colors">About App</Link>
             <Link to="/dashboard" className="hover:text-emerald-400 transition-colors">Dashboard</Link>
             <Link to="/history" className="hover:text-emerald-400 transition-colors">Saved Logs</Link>
-            <Link to="/about" className="hover:text-emerald-400 transition-colors">About App</Link>
+            <Link to="/contact" className="hover:text-emerald-400 transition-colors">Contact Us</Link>
           </div>
 
           <div className="hidden md:flex items-center space-x-4">
@@ -56,9 +57,10 @@ export default function Navbar({ theme, setTheme }) {
       {isOpen && (
         <div className="md:hidden px-4 pt-2 pb-4 bg-slate-950 space-y-3 border-t border-slate-800 flex flex-col text-sm">
           <Link to="/" onClick={() => setIsOpen(false)} className="py-2 hover:text-emerald-400">Home</Link>
+          <Link to="/about" onClick={() => setIsOpen(false)} className="py-2 hover:text-emerald-400">About App</Link>
           <Link to="/dashboard" onClick={() => setIsOpen(false)} className="py-2 hover:text-emerald-400">Dashboard</Link>
           <Link to="/history" onClick={() => setIsOpen(false)} className="py-2 hover:text-emerald-400">Saved Logs</Link>
-          <Link to="/about" onClick={() => setIsOpen(false)} className="py-2 hover:text-emerald-400">About App</Link>
+          <Link to="/contact" onClick={()=>setIsOpen(false)} className="py-2 hover:text-emerald-400">Contact Us</Link>
           <Link to="/login" onClick={() => setIsOpen(false)} className="py-2 text-center bg-slate-900 text-white rounded-xl text-xs font-semibold mt-2">
             Staff Portal
           </Link>

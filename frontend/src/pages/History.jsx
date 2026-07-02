@@ -99,8 +99,10 @@ export default function History({ triggerEditItem }) {
   };
 
   useEffect(() => {
+  setTimeout(() => {
     fetchLogs();
-  }, []);
+  }, 0);
+}, []);
 
   const handleDeleteLog = async (mongoId) => {
     try {

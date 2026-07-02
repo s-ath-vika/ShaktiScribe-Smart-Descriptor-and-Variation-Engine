@@ -4,6 +4,7 @@ const mongoose = require('mongoose');
 require('dotenv').config();
 
 const Description = require('./models/Description');
+const Message = require('./models/Message');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -152,6 +153,32 @@ app.delete('/api/descriptions/:id', async (req, res, next) => {
     }
 
     res.status(204).send();
+  } catch (error) {
+    next(error);
+  }
+});
+
+app.post('/api/messages', async (req, res, next) => {
+  try {
+    const { name, email, message } = req.body;
+    if (!name || !email || !message) {
+      return res.status(400).json({ error: "Name, email, and explicit message inputs are mandatory parameters." });
+    }
+    const freshMessage = new Message({ name, email, message });
+    const savedMessage = await freshMessage.save();
+    res.status(201).json(savedMessage);
+  } catch (error) {
+    if (error.name === 'ValidationError') {
+      return res.status(400).json({ error: error.message });
+    }
+    next(error);
+  }
+});
+
+app.get('/api/messages', async (req, res, next) => {
+  try {
+    const inboundLogs = await Message.find().sort({ createdAt: -1 });
+    res.status(200).json(inboundLogs);
   } catch (error) {
     next(error);
   }

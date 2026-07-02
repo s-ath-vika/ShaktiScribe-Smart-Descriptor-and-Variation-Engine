@@ -16,27 +16,23 @@ export default function Dashboard({ editingItem, clearEditingItem }) {
   const [toastMessage, setToastMessage] = useState('');
 
   useEffect(() => {
-    if (editingItem) {
-      setFormData({
-        name: editingItem.name || '',
-        ingredients: editingItem.ingredients || '',
-        weight: editingItem.weight || '',
-        features: editingItem.features || ''
+  if (editingItem) {
+    setTimeout(() => {
+      setFormData({ 
+        name: editingItem.name || '', 
+        ingredients: editingItem.ingredients || '', 
+        weight: editingItem.weight || '', 
+        features: editingItem.features || '' 
       });
       setActiveTone(editingItem.tone || 'Premium');
-      setEditedText(editingItem.generatedText || '');
-      
-      setCurrentDbId(editingItem._id || null);
+      setEditedText(editingItem.generatedText || ''); 
+      setCurrentDbId(editingItem._id || null); 
       setHasOutput(true);
-      
-      setTimeout(() => {
-        clearEditingItem();
-      }, 0);
-      
       setToastMessage("Loaded historical catalog asset template for operational adjustments.");
-    }
-  }, [editingItem, clearEditingItem]);
-
+      clearEditingItem();
+    }, 0);
+  }
+}, [editingItem, clearEditingItem]);
   const handleGenerationTrigger = () => {
     const fieldErrors = {};
     if (!formData.name) fieldErrors.name = "Product identity string cannot be left blank.";

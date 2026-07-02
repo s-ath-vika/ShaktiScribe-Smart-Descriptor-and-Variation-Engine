@@ -7,6 +7,7 @@ import Dashboard from './pages/Dashboard';
 import History from './pages/History';
 import About from './pages/About';
 import Login from './pages/Login';
+import Contact from './pages/Contact';
 
 export default function App() {
   const [theme, setTheme] = useState('light');
@@ -29,7 +30,9 @@ export default function App() {
               element={<History triggerEditItem={(item) => setEditingLogItem(item)} />} 
             />
             <Route path="/about" element={<About />} />
+            <Route path="/contact" element={<Contact />} />
             <Route path="/login" element={<Login />} />
+            
           </Routes>
         </div>
         

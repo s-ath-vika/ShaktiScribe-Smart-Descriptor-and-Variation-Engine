@@ -2,7 +2,7 @@ const express = require('express');
 const cors = require('cors');
 const mongoose = require('mongoose');
 require('dotenv').config();
-
+const User = require('./models/User');
 const Description = require('./models/Description');
 const Message = require('./models/Message');
 
@@ -85,54 +85,23 @@ app.get('/api/descriptions/:id', async (req, res, next) => {
 // ROUTE 4: POST /api/descriptions - Insert a fresh user-approved copywriting document item
 app.post('/api/descriptions', async (req, res, next) => {
   try {
-    const { name, ingredients, weight, features, tone, generatedText } = req.body;
-
-    if (!name || !ingredients || !generatedText) {
-      return res.status(400).json({ error: "Product Name, input Ingredients list, and calculated description text are mandatory parameters." });
+    const { name, ingredients, weight, features, tone, generatedText, userId, username } = req.body;
+    if (!userId || !username) {
+      return res.status(401).json({ error: "Unauthenticated transaction intercept." });
     }
-
-    const newAssetDocument = new Description({
-      name,
-      ingredients,
-      weight,
-      features,
-      tone,
-      generatedText
-    });
-
+    const newAssetDocument = new Description({ name, ingredients, weight, features, tone, generatedText, createdBy: userId, createdByUsername: username });
     const savedResult = await newAssetDocument.save();
     res.status(201).json(savedResult);
   } catch (error) {
-    if (error.name === 'ValidationError') {
-      return res.status(400).json({ error: error.message });
-    }
     next(error);
   }
 });
-
 // ROUTE 5: PUT /api/descriptions/:id - Perform a full transactional parameters update query
 app.put('/api/descriptions/:id', async (req, res, next) => {
   try {
     const { id } = req.params;
-    if (!mongoose.Types.ObjectId.isValid(id)) {
-      return res.status(400).json({ error: "Modification skipped. Invalid object identity key sequence format." });
-    }
-
     const { name, ingredients, weight, features, tone, generatedText } = req.body;
-    if (!name || !ingredients) {
-      return res.status(400).json({ error: "Validation block failed. Updated layouts require valid name and ingredients text elements." });
-    }
-
-    const updatedDocument = await Description.findByIdAndUpdate(
-      id,
-      { name, ingredients, weight, features, tone, generatedText },
-      { new: true, runValidators: true }
-    );
-
-    if (!updatedDocument) {
-      return res.status(404).json({ error: `Asset edit rejected. Profile index matching ID ${id} is absent.` });
-    }
-
+    const updatedDocument = await Description.findByIdAndUpdate(id, { name, ingredients, weight, features, tone, generatedText }, { new: true });
     res.status(200).json(updatedDocument);
   } catch (error) {
     next(error);
@@ -179,6 +148,40 @@ app.get('/api/messages', async (req, res, next) => {
   try {
     const inboundLogs = await Message.find().sort({ createdAt: -1 });
     res.status(200).json(inboundLogs);
+  } catch (error) {
+    next(error);
+  }
+});
+
+app.post('/api/auth/signup', async (req, res, next) => {
+  try {
+    const { username, fullName, email, password } = req.body;
+    if (!username || !fullName || !email || !password) {
+      return res.status(400).json({ error: "All account fields are mandatory." });
+    }
+    const duplicateUser = await User.findOne({ $or: [{ username }, { email }] });
+    if (duplicateUser) {
+      return res.status(400).json({ error: "Username string or email endpoint already registered." });
+    }
+    const freshUser = new User({ username, fullName, email, password });
+    await freshUser.save();
+    res.status(201).json({ id: freshUser._id, username: freshUser.username, fullName: freshUser.fullName });
+  } catch (error) {
+    next(error);
+  }
+});
+
+app.post('/api/auth/login', async (req, res, next) => {
+  try {
+    const { identifier, password } = req.body;
+    if (!identifier || !password) {
+      return res.status(400).json({ error: "Identification string and password are required." });
+    }
+    const userMatch = await User.findOne({ $or: [{ username: identifier }, { email: identifier }] });
+    if (!userMatch || userMatch.password !== password) {
+      return res.status(401).json({ error: "Authentication checkpoint failed. Invalid identity parameters." });
+    }
+    res.status(200).json({ id: userMatch._id, username: userMatch.username, fullName: userMatch.fullName });
   } catch (error) {
     next(error);
   }

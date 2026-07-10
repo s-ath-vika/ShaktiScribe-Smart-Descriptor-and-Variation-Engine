@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Button, Input, Modal, Toast, Loader } from '../components/ui';
 
-export default function Dashboard({ editingItem, clearEditingItem ,user}) {
+export default function Dashboard({ editingItem, clearEditingItem }) {
   const [formData, setFormData] = useState({ name: '', ingredients: '', weight: '', features: '' });
   const [errors, setErrors] = useState({});
   
@@ -14,7 +14,8 @@ export default function Dashboard({ editingItem, clearEditingItem ,user}) {
   const [modalActionType, setModalActionType] = useState('CREATE'); 
   const [isConfirmModalOpen, setIsModalOpen] = useState(false);
   const [toastMessage, setToastMessage] = useState('');
-
+  
+  const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
   useEffect(() => {
   if (editingItem) {
     setTimeout(() => {
@@ -62,46 +63,45 @@ export default function Dashboard({ editingItem, clearEditingItem ,user}) {
   };
 
   const handleExecuteDatabaseTransaction = async () => {
-  try {
-    if (!user || !user.id) {
-      setToastMessage("Session authorization token missing. Please sign back in.");
-      return;
+    try {
+      const isUpdate = modalActionType === 'UPDATE';
+      const endpointUrl = isUpdate 
+        ? `${API_BASE_URL}/api/descriptions/${currentDbId}`
+        : `${API_BASE_URL}/api/descriptions`;
+      
+      const token = localStorage.getItem('token');
+
+      const response = await fetch(endpointUrl, {
+        method: isUpdate ? 'PUT' : 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          name: formData.name,
+          ingredients: formData.ingredients,
+          weight: formData.weight,
+          features: formData.features,
+          tone: activeTone,
+          generatedText: editedText
+        })
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'API database cluster rejected request.');
+      }
+
+      setIsModalOpen(false);
+      setToastMessage(isUpdate 
+        ? "Historical ledger record overwritten and synchronized successfully!" 
+        : "Asset logs committed successfully to the backend database!"
+      );
+    } catch (error) {
+      console.error(error);
+      setToastMessage(error.message || "Failed to write parameters over protected networks.");
     }
-
-    const isUpdate = modalActionType === 'UPDATE';
-    const endpointUrl = isUpdate 
-      ? `http://localhost:5000/api/descriptions/${currentDbId}` 
-      : 'http://localhost:5000/api/descriptions';
-
-    const bodyPayload = {
-      name: formData.name,
-      ingredients: formData.ingredients,
-      weight: formData.weight,
-      features: formData.features,
-      tone: activeTone,
-      generatedText: editedText,
-      userId: user.id,       
-      username: user.username
-    };
-
-    const response = await fetch(endpointUrl, {
-      method: isUpdate ? 'PUT' : 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(bodyPayload)
-    });
-
-    if (!response.ok) throw new Error('API database cluster rejected the tracking request transaction.');
-    setIsModalOpen(false);
-    
-    setToastMessage(isUpdate 
-      ? "Historical ledger record overwritten and synchronized successfully!" 
-      : "Asset logs committed successfully to the backend engine room database!"
-    );
-  } catch (error) {
-    console.error(error);
-    setToastMessage("Failed to write log parameters over cloud cluster endpoints network.");
-  }
-};
+  };
 
   return (
     <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 min-h-[60vh] space-y-8">

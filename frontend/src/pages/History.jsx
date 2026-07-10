@@ -7,6 +7,7 @@ function HistoryCard({ log, onDelete, onEdit, onToast }) {
 
   const textBody = log.generatedText || "No marketing text generated.";
   const summaryLine = textBody.length > 90 ? `${textBody.substring(0, 90)}...` : textBody;
+  
 
   return (
     <div className="p-6 flex flex-col md:flex-row md:items-start justify-between gap-6 group hover:bg-slate-50 dark:hover:bg-slate-800/40 transition-colors">
@@ -83,17 +84,23 @@ export default function History({ triggerEditItem }) {
   const [loading, setLoading] = useState(true);
   const [toastMessage, setToastMessage] = useState('');
   const navigate = useNavigate();
-
+  const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
   const fetchLogs = async () => {
     try {
       setLoading(true);
-      const response = await fetch('http://localhost:5000/api/descriptions');
+      const token = localStorage.getItem('token');
+      
+      const response = await fetch(`${API_BASE_URL}/api/descriptions`, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
       if (!response.ok) throw new Error('Database sync failed.');
       const data = await response.json();
       setSavedLogs(data);
     } catch (error) {
       console.error(error);
-      setToastMessage("Could not retrieve historical catalogs from server node.");
+      setToastMessage("Could not retrieve historical catalogs from secured nodes.");
     } finally {
       setLoading(false);
     }
@@ -107,19 +114,22 @@ export default function History({ triggerEditItem }) {
 
   const handleDeleteLog = async (mongoId) => {
     try {
-      const response = await fetch(`http://localhost:5000/api/descriptions/${mongoId}`, { 
-        method: 'DELETE' 
+      const token = localStorage.getItem('token');
+      const response = await fetch(`${API_BASE_URL}/api/descriptions/${mongoId}`, { 
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
       });
       
       if (response.status === 204) {
         setSavedLogs(prev => prev.filter(log => log._id !== mongoId));
         setToastMessage("Asset record safely wiped from cloud storage ledger.");
       } else {
-        throw new Error("Deletion sequence rejected by backend engine.");
+        throw new Error("Deletion sequence rejected.");
       }
-    } catch (error) {
-      console.error(error);
-      setToastMessage("Deletion sequence failed. Check server port.");
+    } catch {
+      setToastMessage("Deletion sequence failed. Unauthorized token parameter.");
     }
   };
 

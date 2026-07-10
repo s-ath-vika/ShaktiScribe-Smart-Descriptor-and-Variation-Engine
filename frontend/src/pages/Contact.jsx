@@ -7,7 +7,7 @@ export default function Contact() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [statusMessage, setStatusMessage] = useState('');
   const [statusType, setStatusType] = useState('success');
-
+  const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
   const handleInputChange = (field, val) => {
     setFormData(prev => ({ ...prev, [field]: val }));
     if (errors[field]) {
@@ -32,7 +32,7 @@ export default function Contact() {
     setStatusMessage('');
 
     try {
-      const response = await fetch('http://localhost:5000/api/messages', {
+      const response = await fetch(`${API_BASE_URL}/api/messages`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(formData)

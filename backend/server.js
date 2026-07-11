@@ -97,7 +97,7 @@ app.get('/api/auth/google/callback',
 
 const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, 
-  max: 25, 
+  max: 5, 
   message: { error: "Too many attempts. Rate limit rule active." },
   standardHeaders: true,
   legacyHeaders: false,

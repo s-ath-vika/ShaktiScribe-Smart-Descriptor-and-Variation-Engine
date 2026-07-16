@@ -34,28 +34,52 @@ export default function Dashboard({ editingItem, clearEditingItem }) {
     }, 0);
   }
 }, [editingItem, clearEditingItem]);
-  const handleGenerationTrigger = () => {
-    const fieldErrors = {};
-    if (!formData.name) fieldErrors.name = "Product identity string cannot be left blank.";
-    if (!formData.ingredients) fieldErrors.ingredients = "Manufacturing ingredient specifications are required.";
-    
-    if (Object.keys(fieldErrors).length > 0) {
-      setErrors(fieldErrors);
-      return;
+  const handleGenerationTrigger = async () => {
+  const fieldErrors = {};
+  if (!formData.name) fieldErrors.name = "Product identity string cannot be left blank.";
+  if (!formData.ingredients) fieldErrors.ingredients = "Manufacturing ingredient specifications are required.";
+
+  if (Object.keys(fieldErrors).length > 0) {
+    setErrors(fieldErrors);
+    return;
+  }
+
+  setErrors({});
+  setIsProcessing(true); // Triggers your built-in Week 3 CSS loader layout!
+  setHasOutput(false);
+
+  try {
+    const token = localStorage.getItem('token');
+    const response = await fetch(`${API_BASE_URL}/api/ai/generate-description`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
+      body: JSON.stringify({
+        name: formData.name,
+        ingredients: formData.ingredients,
+        weight: formData.weight,
+        features: formData.features,
+        tone: activeTone
+      })
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data.error || "Network matrix rejected AI compilation payload.");
     }
-    
-    setErrors({});
-    setIsProcessing(true);
-    setHasOutput(false);
-    
-    setTimeout(() => {
-      const templateText = `Experience the rich agricultural legacy of Uttarakhand with HimShakti's artisan-crafted ${formData.name}. Purely prepared using premium, clean mountain-grown ingredients like ${formData.ingredients.split(',')[0]} and tailored strictly for a target ${activeTone.toLowerCase()} consumer environment. Packed clean in customized dimensions (${formData.weight || 'Standard SKU'}), it delivers the ultimate nutrient-dense fuel stack your active lifestyle demands. ${formData.features ? `Explicitly verified as a local collection variant that is completely ${formData.features.toLowerCase()}.` : ''}`;
-      
-      setEditedText(templateText);
-      setIsProcessing(false);
-      setHasOutput(true);
-    }, 3000);
-  };
+
+    setEditedText(data.text);
+    setHasOutput(true);
+  } catch (err) {
+    console.error(err);
+    setToastMessage(err.message || "Failed to establish network sync with Gemini cluster.");
+  } finally {
+    setIsProcessing(false);
+  }
+};
 
   const triggerSaveModal = (type) => {
     setModalActionType(type);

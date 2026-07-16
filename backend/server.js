@@ -6,6 +6,8 @@ const jwt = require('jsonwebtoken');
 const rateLimit = require('express-rate-limit');
 const { z } = require('zod');
 require('dotenv').config();
+const { GoogleGenAI } = require('@google/genai');
+const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 const session = require('express-session');
 const passport = require('passport');
 const GoogleStrategy = require('passport-google-oauth20').Strategy;
@@ -214,6 +216,65 @@ app.post('/api/auth/login', authLimiter, async (req, res, next) => {
 // -------------------------------------------------------------------------
 // 🔒 SECURED PLATFORM CRUD NODES (Guarded via requireAuth Middleware)
 // -------------------------------------------------------------------------
+// CRUD Route 0: POST /api/ai/generate-description (AI Prompt Engine)
+// --- WEEK 7 AI INTEGRATION ROUTE VARIATION UPDATE START ---
+app.post('/api/ai/generate-description', requireAuth, async (req, res, next) => {
+  try {
+    const { name, ingredients, weight, features, tone } = req.body;
+
+    if (!name || !ingredients) {
+      return res.status(400).json({ error: "Product name and ingredients are required parameters." });
+    }
+
+    // 🎲 Generate a lightweight unique variation seed for non-repetitive cycles
+    const variationSeed = Math.random().toString(36).substring(2, 8);
+
+    // Calling the verified functional gemini-3.1-flash-lite model
+    const response = await ai.models.generateContent({
+      model: 'gemini-3.1-flash-lite',
+      contents: `You are an expert e-commerce copywriter specializing in Indian organic markets. 
+      Generate a compelling, keyword-rich Amazon listing product description for a product from "HimShakti", an enterprise based out of Uttarakhand.
+
+      Generation Seed Parameter: ${variationSeed}
+
+      Diversity Constraints:
+      - Every generation sequence must be meaningfully unique from alternate attempts.
+      - Use fresh sentence structures, varied vocabulary, unique opening hooks, and distinct descriptive narrative angles.
+      - Avoid repeating common phrasing blocks from typical outputs.
+
+      Product Attributes:
+      - Name: ${name}
+      - Key Ingredients: ${ingredients}
+      - Volume/SKU Weight: ${weight || 'Standard SKU Package'}
+      - Key Features: ${features || 'Naturally sourced, organic'}
+      - Brand Tone: ${tone || 'Professional'} (Ensure the text strictly embodies a ${tone || 'Professional'} marketing angle)
+
+      Output Requirements:
+      - Write exactly 3-4 highly engaging sentences.
+      - Weave in the ingredients seamlessly.
+      - Accentuate the clean mountain agricultural heritage of Uttarakhand.
+      - Return ONLY the final description text. Do not add markdown labels, formatting, annotations, titles, or quotes.`
+    });
+
+    if (!response.text) {
+      throw new Error("Gemini engine produced an empty string completion matrix.");
+    }
+
+    res.status(200).json({ text: response.text.trim() });
+  }catch (error) {
+    console.error("❌ Gemini API Pipeline Crash:", error);
+
+    if (error.status === 503) {
+    return res.status(503).json({
+      error: "Gemini is temporarily experiencing high demand. Please try again in a moment."
+    });
+  }
+
+    res.status(500).json({ 
+      error: "The downstream AI pipeline timed out or rejected parameters. Please check target cluster state." 
+    });
+  }
+});
 
 // CRUD ROUTE 1: GET All Core Ledger Listings
 app.get('/api/descriptions', requireAuth, async (req, res, next) => {

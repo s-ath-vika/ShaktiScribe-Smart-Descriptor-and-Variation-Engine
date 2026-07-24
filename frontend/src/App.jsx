@@ -8,6 +8,7 @@ import History from './pages/History';
 import About from './pages/About';
 import Login from './pages/Login';
 import Contact from './pages/Contact';
+import ErrorBoundary from './components/ErrorBoundary';
 
 // 🛡️ SECURITY BASIC ROUTE GUARD COMPONENT
 function ProtectedRoute({ children }) {
@@ -40,6 +41,7 @@ export default function App() {
   };
 
   return (
+    <ErrorBoundary>
     <BrowserRouter>
       <div className={`min-h-screen flex flex-col bg-slate-50 text-slate-900 overflow-x-hidden ${theme === 'dark' ? 'dark bg-slate-950 text-slate-100' : ''}`}>
         <Navbar theme={theme} setTheme={setTheme} authState={isAuthenticated} onLogout={handleLogout} />
@@ -75,5 +77,6 @@ export default function App() {
         <Footer />
       </div>
     </BrowserRouter>
-  );
+    </ErrorBoundary>
+  ); 
 }

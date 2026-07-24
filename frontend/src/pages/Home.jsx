@@ -119,12 +119,6 @@ export default function Home({ onSelectProductToEdit }) {
                 >
                   Sign In to Access Dashboard →
                 </button>
-                <button
-                  onClick={() => navigate('/register')}
-                  className="px-6 py-3 bg-slate-200 hover:bg-slate-300 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-900 dark:text-white font-bold text-xs rounded-xl transition-all cursor-pointer"
-                >
-                  Create Account
-                </button>
               </div>
             </div>
           ) : products.length === 0 ? (

@@ -31,7 +31,11 @@ mongoose.connect(process.env.MONGO_URI || 'mongodb://127.0.0.1:27017/shaktiscrib
   });
 
 // 🛡️ SECURITY BARRIERS: ORIGIN CORALS & FLOOD CONTROL GATES
-const allowedOrigins = ['http://localhost:5173', 'https://shaktiscribe-frontend.vercel.app'];
+const allowedOrigins = [
+  'http://localhost:5173',
+  'https://shaktiscribe.vercel.app/',            
+  'https://shaktiscribe-frontend.vercel.app'
+];
 
 app.use(cors({
   origin: function (origin, callback) {
@@ -376,3 +380,4 @@ app.use((err, req, res, next) => {
 app.listen(PORT, () => {
   console.log(`🚀 [ShaktiScribe Engine Room Running Securely on Port ${PORT}]`);
 });
+module.exports = app;

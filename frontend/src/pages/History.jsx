@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Button, Loader, Toast } from '../components/ui';
+import { Button, Loader, Toast, Modal } from '../components/ui';
 
 function HistoryCard({ log, onDelete, onEdit, onToast }) {
   const [isExpanded, setIsExpanded] = useState(false);
@@ -83,6 +83,8 @@ export default function History({ triggerEditItem }) {
   const [savedLogs, setSavedLogs] = useState([]);
   const [loading, setLoading] = useState(true);
   const [toastMessage, setToastMessage] = useState('');
+  const [deleteTargetId, setDeleteTargetId] = useState(null);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const navigate = useNavigate();
   const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
   const fetchLogs = async () => {
@@ -112,24 +114,33 @@ export default function History({ triggerEditItem }) {
     }, 0);
   }, []);
 
-  const handleDeleteLog = async (mongoId) => {
+  const promptDeleteLog = (mongoId) => {
+    setDeleteTargetId(mongoId);
+    setIsDeleteModalOpen(true);
+  };
+
+  const confirmDeleteLog = async () => {
+    if (!deleteTargetId) return;
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch(`${API_BASE_URL}/api/descriptions/${mongoId}`, { 
+      const response = await fetch(`${API_BASE_URL}/api/descriptions/${deleteTargetId}`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${token}`
         }
       });
-      
+
       if (response.status === 204) {
-        setSavedLogs(prev => prev.filter(log => log._id !== mongoId));
+        setSavedLogs(prev => prev.filter(log => log._id !== deleteTargetId));
         setToastMessage("Asset record safely wiped from cloud storage ledger.");
       } else {
         throw new Error("Deletion sequence rejected.");
       }
     } catch {
       setToastMessage("Deletion sequence failed. Unauthorized token parameter.");
+    } finally {
+      setIsDeleteModalOpen(false);
+      setDeleteTargetId(null);
     }
   };
 
@@ -152,8 +163,26 @@ export default function History({ triggerEditItem }) {
             <p className="text-xs text-slate-400 mt-4">Streaming historical parameters ledger packages...</p>
           </div>
         ) : savedLogs.length === 0 ? (
-          <div className="border-2 border-dashed border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 rounded-2xl p-16 text-center text-slate-400">
-            No saved retail marketing metrics strings detected on active models cache.
+          <div className="border-2 border-dashed border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 rounded-2xl p-12 md:p-16 text-center space-y-4 shadow-sm transition-all">
+            <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-emerald-500/10 text-emerald-500 text-2xl font-bold border border-emerald-500/20">
+              📦
+            </div>
+            <div className="max-w-md mx-auto space-y-2">
+              <h3 className="text-lg font-bold text-slate-900 dark:text-white">No Saved Catalog Assets Yet</h3>
+              <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
+                Your cloud storage ledger is currently empty. Input product attributes on the Dashboard workspace to generate and commit your first AI listing log.
+              </p>
+            </div>
+            <div className="pt-2">
+              <Button 
+                variant="primary" 
+                size="sm" 
+                onClick={() => navigate('/dashboard')}
+                className="px-6 py-2.5 text-xs font-bold shadow-md"
+              >
+                ➕ Create First Listing
+              </Button>
+            </div>
           </div>
         ) : (
           <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl divide-y divide-slate-100 dark:divide-slate-800 shadow-sm overflow-hidden">
@@ -161,7 +190,7 @@ export default function History({ triggerEditItem }) {
               <HistoryCard 
                 key={log._id}
                 log={log}
-                onDelete={() => handleDeleteLog(log._id)}
+                onDelete={() => promptDeleteLog(log._id)}
                 onToast={(msg) => setToastMessage(msg)}
                 onEdit={() => {
                   triggerEditItem(log);
@@ -172,7 +201,26 @@ export default function History({ triggerEditItem }) {
           </div>
         )}
       </div>
-
+      <Modal
+          isOpen={isDeleteModalOpen}
+          onClose={() => setIsDeleteModalOpen(false)}
+          title="Confirm Destructive Action"
+        >
+          <div className="space-y-4">
+            <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
+              Are you sure you want to permanently wipe this catalog record from MongoDB cloud storage? This action cannot be reversed.
+            </p>
+            <div className="flex justify-end gap-3 pt-2">
+              <Button variant="outline" size="sm" onClick={() => setIsDeleteModalOpen(false)}>Cancel</Button>
+              <button 
+                onClick={confirmDeleteLog} 
+                className="px-4 py-2 bg-red-600 hover:bg-red-500 text-white font-bold text-xs rounded-xl transition-all cursor-pointer shadow-md"
+              >
+                Confirm Delete
+              </button>
+            </div>
+          </div>
+        </Modal>
       {toastMessage && (
         <Toast message={toastMessage} isVisible={!!toastMessage} onDismiss={() => setToastMessage('')} />
       )}
